@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WhatsApp Session Bot</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #f5f5f5;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+    input, button {
+      padding: 10px;
+      margin: 0.5rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+    input {
+      width: 250px;
+    }
+    button {
+      background-color: #00bfa5;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #00a38c;
+    }
+    pre {
+      background-color: #1e1e1e;
+      padding: 1rem;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      width: 100%;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <h2>🔗 WhatsApp Session Linker</h2>
+  <input id="phone" placeholder="+254712345678" />
+  <button onclick="getCode()">🔑 Generate Code</button>
+  <button onclick="getStatus()">📊 Bot Status</button>
+  <button onclick="logout()">🚪 Disconnect</button>
+
+  <pre id="result">Waiting for action...</pre>
+
+  <h3>💬 Send Bulk Message</h3>
+  <textarea id="bulk-message" placeholder="Your message..." rows="5" style="width: 100%; max-width: 400px;"></textarea><br>
+  <button onclick="sendBulk()">📤 Send</button>
+
+  <script>
+    async function getCode() {
+      const phone = document.getElementById('phone').value.trim();
+      const result = document.getElementById('result');
+
+      if (!/^\+\d{10,15}$/.test(phone)) {
+        return result.textContent = '⚠️ Enter a valid phone number like +254712345678';
+      }
+
+      try {
+        result.textContent = '⏳ Requesting session code...';
+        const res = await fetch(`/code?phone=${phone}`);
+        const data = await res.json();
+        if (data.code) {
+          result.textContent = `✅ Session code generated:\n${data.code}\n\nGo to WhatsApp > Linked Devices > Link with code.`;
+        } else {
+          result.textContent = '❌ Failed: ' + (data.error || 'Unknown error');
+        }
+      } catch (err) {
+        result.textContent = '❌ Network error. Please try again.';
+      }
+    }
+
+    async function getStatus() {
+      const result = document.getElementById('result');
+      try {
+        const res = await fetch('/status');
+        const data = await res.json();
+        result.textContent = `📊 Status: ${data.connected ? 'Connected ✅' : 'Not connected ❌'}\n🧑‍🤝‍🧑 Groups: ${data.groupCount}`;
+      } catch (err) {
+        result.textContent = '❌ Failed to fetch status.';
+      }
+    }
+
+    async function sendBulk() {
+      const message = document.getElementById('bulk-message').value.trim();
+      const result = document.getElementById('result');
+
+      if (!message) return result.textContent = '⚠️ Message is empty';
+
+      try {
+        const res = await fetch('/send-bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message })
+        });
+        const data = await res.json();
+        if (data.success) {
+          result.textContent = '✅ Message sent to all group members!';
+        } else {
+          result.textContent = '❌ Failed: ' + (data.error || 'Unknown error');
+        }
+      } catch (err) {
+        result.textContent = '❌ Could not send message.';
+      }
+    }
+
+    async function logout() {
+      const result = document.getElementById('result');
+      try {
+        const res = await fetch('/logout', { method: 'POST' });
+        const data = await res.json();
+        result.textContent = data.success ? '✅ Bot disconnected.' : '❌ Failed to disconnect.';
+      } catch (err) {
+        result.textContent = '❌ Network error.';
+      }
+    }
+  </script>
+</body>
+</html>
