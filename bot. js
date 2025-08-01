@@ -1,0 +1,4 @@
+// bot.js
+const { makeWASocket } = require('@whiskeysockets/baileys');
+// Your WhatsApp bot logic here
+console.log('🤖 WhatsApp bot loaded...');
