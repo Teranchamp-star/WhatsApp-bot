@@ -3,5 +3,5 @@ services:
     name: whatsapp-bot
     env: node
     buildCommand: npm install
-    startCommand: node server.js
-    autoDeploy: true
+    startCommand: node index.js
+    plan: free
